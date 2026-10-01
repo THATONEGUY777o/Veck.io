@@ -1967,19 +1967,23 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
   const firebaseConfig = {
-    apiKey: "AIASyA...",
-    authDomain: "teu-projeto.firebaseapp.com",
-    databaseURL: "https://teu-projeto-default-rtdb.firebaseio.com",
-    projectId: "teu-projeto",
-    storageBucket: "teu-projeto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
+    apiKey: "AIzaSyA17W8iV3aO4eTYqJGSAvHVQ96uI4nzGK8",
+    authDomain: "veck-io.firebaseapp.com",
+    databaseURL: "https://veck-io-default-rtdb.firebaseio.com",
+    projectId: "veck-io",
+    storageBucket: "veck-io.firebasestorage.app",
+    messagingSenderId: "587896276882",
+    appId: "1:587896276882:web:db20bb4f71ee7f4336234b",
+    measurementId: "G-BSF0BBPG86"
   };
 
   const app = initializeApp(firebaseConfig);
-  // ...
-    </script>
+  const analytics = getAnalytics(app);
+</script>
     <script src="script.js"></script>
 </body>
 </html>
