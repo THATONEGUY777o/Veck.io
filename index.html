@@ -1963,6 +1963,23 @@
             });
         });
     </script>
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIASyA...",
+    authDomain: "teu-projeto.firebaseapp.com",
+    databaseURL: "https://teu-projeto-default-rtdb.firebaseio.com",
+    projectId: "teu-projeto",
+    storageBucket: "teu-projeto.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  // ...
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
