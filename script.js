@@ -1,32 +1,48 @@
-// Aceder à base de dados que foi inicializada no HTML
+// Referência à base de dados inicializada no HTML
 const db = window.database;
 
-// Exemplo: Função para criar/entrar numa sala do Veck.io
-function enterRoom(roomId, playerData) {
-    if (!db) {
-        console.error("Firebase ainda não está conectado!");
+// Função para criar a sala no Firebase
+function createRoom() {
+    if (!window.database || !window.dbRef || !window.dbSet) {
+        console.error("Firebase não está carregado no window!");
+        alert("Falha ao criar sala. Tente novamente.");
         return;
     }
 
-    // Código para enviar os dados do jogador para a nuvem
-    console.log("A conectar à sala: " + roomId);
-    
-    // Se o teu jogo usa o SDK do Firebase direto no JS,
-    // podes usar as funções globais ou passar os dados normalmente.
-}
+    // Gera um código de sala aleatório de 6 dígitos
+    const roomCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const nicknameInput = document.getElementById('nicknameInput') || document.querySelector('input[type="text"]');
+    const playerName = nicknameInput ? nicknameInput.value : 'CyberPilot';
 
-// Lógica de cópia de código do botão (que já tínhamos ajustado)
-const btnCopy = document.getElementById('btnCopyActiveCode');
-if (btnCopy) {
-    btnCopy.addEventListener('click', () => {
-        const codeElement = document.getElementById('activeRoomCode');
-        if (!codeElement) return;
+    // Aponta para 'rooms/CODIGO' na base de dados
+    const roomRef = window.dbRef(window.database, 'rooms/' + roomCode);
 
-        navigator.clipboard.writeText(codeElement.innerText).then(() => {
-            btnCopy.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
-            setTimeout(() => {
-                btnCopy.innerHTML = '<i class="fa-regular fa-copy"></i>';
-            }, 1500);
-        });
+    window.dbSet(roomRef, {
+        host: playerName,
+        status: 'waiting',
+        createdAt: Date.now()
+    }).then(() => {
+        console.log("Sala criada com sucesso! Código:", roomCode);
+        
+        // Atualiza a interface com o código da sala
+        const activeRoomElement = document.getElementById('activeRoomCode');
+        if (activeRoomElement) {
+            activeRoomElement.innerText = roomCode;
+        }
+        
+        // Aqui entra a lógica do teu jogo para mudar de ecrã/abrir o lobby
+    }).catch((error) => {
+        console.error("Erro no Firebase ao criar sala:", error);
+        alert("Falha ao criar sala. Tente novamente.");
     });
 }
+
+// Ligar o botão "+ CRIAR SALA" à função
+document.addEventListener('DOMContentLoaded', () => {
+    // Procura o botão de criar sala pelo ID ou pela classe
+    const btnCreate = document.getElementById('btnCreateRoom') || document.querySelector('button:contains("CRIAR SALA")');
+    
+    if (btnCreate) {
+        btnCreate.addEventListener('click', createRoom);
+    }
+});
