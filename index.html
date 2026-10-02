@@ -1964,12 +1964,11 @@
         });
     </script>
     <script type="module">
+  // Importações via CDN (compatíveis com navegador direto)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
+  // As tuas credenciais reais do Veck-io
   const firebaseConfig = {
     apiKey: "AIzaSyA17W8iV3aO4eTYqJGSAvHVQ96uI4nzGK8",
     authDomain: "veck-io.firebaseapp.com",
@@ -1981,8 +1980,13 @@ module">
     measurementId: "G-BSF0BBPG86"
   };
 
+  // Inicializa o Firebase e o Banco de Dados
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
+  const database = getDatabase(app);
+
+  // Torna o banco de dados acessível para os scripts do jogo
+  window.database = database;
+  console.log("Firebase inicializado com sucesso!");
 </script>
     <script src="script.js"></script>
 </body>
