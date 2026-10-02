@@ -1963,12 +1963,10 @@
             });
         });
     </script>
-    <script type="module">
-  // Importações via CDN (compatíveis com navegador direto)
+<script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getDatabase, ref, set, push, onValue, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  // As tuas credenciais reais do Veck-io
   const firebaseConfig = {
     apiKey: "AIzaSyA17W8iV3aO4eTYqJGSAvHVQ96uI4nzGK8",
     authDomain: "veck-io.firebaseapp.com",
@@ -1980,13 +1978,15 @@
     measurementId: "G-BSF0BBPG86"
   };
 
-  // Inicializa o Firebase e o Banco de Dados
   const app = initializeApp(firebaseConfig);
   const database = getDatabase(app);
 
-  // Torna o banco de dados acessível para os scripts do jogo
+  // Expor para o script.js conseguir criar salas
   window.database = database;
-  console.log("Firebase inicializado com sucesso!");
+  window.dbRef = ref;
+  window.dbSet = set;
+  window.dbPush = push;
+  window.dbOnValue = onValue;
 </script>
     <script src="script.js"></script>
 </body>
