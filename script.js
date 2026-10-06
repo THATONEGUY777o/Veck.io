@@ -18,29 +18,9 @@ function createRoom() {
         host: playerName,
         status: 'waiting',
         createdAt: Date.now()
-    })// Exemplo dentro do callback da sala criada/unida:
-.then(() => {
-    console.log("Entrou na sala!");
+    }).then(() => {
+        console.log("Sala criada:", roomCode);
 
-    // 1. Esconder o menu principal
-    const menu = document.getElementById('mainMenu') || document.querySelector('.card-menu');
-    if (menu) menu.style.display = 'none';
-
-    // 2. Mostrar o Canvas do jogo (se estiver escondido)
-    const gameCanvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
-    if (gameCanvas) {
-        gameCanvas.style.display = 'block';
-    }
-
-    // 3. Iniciar o loop de renderização do jogo (ajusta para o nome da tua função)
-    if (typeof startGame === 'function') {
-        startGame();
-    } else if (typeof initGame === 'function') {
-        initGame();
-    } else if (typeof animate === 'function') {
-        animate();
-    }
-});
         // 1. Atualiza o indicador de status da conexão
         const statusElement = document.querySelector('.status-text') || document.getElementById('connectionStatus');
         if (statusElement) {
