@@ -25,7 +25,6 @@ function launchGameView() {
     }
 }
 
-// Função para criar a sala no Firebase
 function createRoom() {
     if (!window.database || !window.dbRef || !window.dbSet) {
         alert("A aguardar conexão ao servidor...");
@@ -45,19 +44,42 @@ function createRoom() {
     }).then(() => {
         console.log("Sala criada com sucesso:", roomCode);
 
-        // 1. Atualiza o indicador de status da conexão
+        // 1. Atualiza o estado da conexão para Verde
         const statusElement = document.querySelector('.status-text') || document.getElementById('connectionStatus');
         if (statusElement) {
             statusElement.innerText = "Conectado ao Cloud Server";
             statusElement.style.color = "#34d399";
         }
 
-        // 2. Coloca o código da sala no ecrã
+        // 2. Procura o botão principal do jogo
+        const btnMainPlay = document.getElementById('btnPlayOffline') || document.querySelector('button.btn-primary') || document.querySelector('button');
+
+        if (btnMainPlay) {
+            // Transforma o botão para "JOGAR ONLINE" com o código da sala
+            btnMainPlay.innerText = `🚀 JOGAR ONLINE (SALA: ${roomCode})`;
+            btnMainPlay.style.backgroundColor = "#10b981"; // Verde Neon/Emeralda
+            btnMainPlay.style.color = "#ffffff";
+
+            // Remove ouvintes antigos e define que o clique agora inicia o jogo online
+            const newBtn = btnMainPlay.cloneNode(true);
+            btnMainPlay.parentNode.replaceChild(newBtn, btnMainPlay);
+
+            newBtn.addEventListener('click', () => {
+                launchGameView();
+            });
+        }
+
+        // 3. Mostra o código da sala em qualquer outro elemento reservado
         const codeElement = document.getElementById('activeRoomCode');
         if (codeElement) {
             codeElement.innerText = roomCode;
         }
 
+    }).catch((error) => {
+        console.error("Erro ao criar sala:", error);
+        alert("Falha ao criar sala. Tente novamente.");
+    });
+}
         // 3. Muda para a tela do jogo/canvas
 function launchGameView() {
     // 1. Oculta os menus
