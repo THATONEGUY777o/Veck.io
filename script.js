@@ -59,29 +59,45 @@ function createRoom() {
         }
 
         // 3. Muda para a tela do jogo/canvas
-        launchGameView();
+function launchGameView() {
+    // 1. Oculta os menus
+    const mainMenu = document.getElementById('mainMenu') || document.querySelector('.card-menu');
+    const roomLobby = document.getElementById('roomLobby') || document.querySelector('.room-lobby');
+    
+    if (mainMenu) mainMenu.style.display = 'none';
+    if (roomLobby) roomLobby.style.display = 'none';
 
-    }).catch((error) => {
-        console.error("Erro ao criar sala:", error);
-        alert("Falha ao criar sala. Tente novamente.");
-    });
-}
-
-// Ligar o botão "+ CRIAR SALA" à função
-document.addEventListener('DOMContentLoaded', () => {
-    // Procura o botão pelo ID
-    let btnCreate = document.getElementById('btnCreateRoom');
-
-    // Se não encontrar por ID, procura todos os botões e acha o que tem o texto "CRIAR SALA"
-    if (!btnCreate) {
-        const buttons = document.querySelectorAll('button');
-        buttons.forEach(btn => {
-            if (btn.innerText.includes('CRIAR SALA')) {
-                btnCreate = btn;
-            }
-        });
+    // 2. Localiza e exibe o Canvas do jogo
+    const canvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
+    if (canvas) {
+        canvas.style.display = 'block';
+        
+        // Redimensiona o canvas para o tamanho da janela se estiver zerado
+        if (canvas.width === 0 || canvas.height === 0) {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
     }
 
+    // 3. Tenta iniciar as variáveis e loops padrão do Veck.io
+    if (typeof isPlaying !== 'undefined') isPlaying = true;
+    if (typeof gameRunning !== 'undefined') gameRunning = true;
+
+    // Tenta executar a função de arranque do jogo
+    if (typeof startGame === 'function') {
+        startGame();
+    } else if (typeof init === 'function') {
+        init();
+    } else if (typeof start === 'function') {
+        start();
+    } else if (typeof loop === 'function') {
+        loop();
+    } else if (typeof animate === 'function') {
+        animate();
+    } else {
+        console.warn("Nenhuma função de loop (startGame, init, loop) foi encontrada no script.js.");
+    }
+}
     // Associa o clique
     if (btnCreate) {
         btnCreate.addEventListener('click', createRoom);
