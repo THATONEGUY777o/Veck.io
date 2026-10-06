@@ -10,6 +10,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script type="module">
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+// Ouve o estado real da conexão com o Firebase
+const connectedRef = ref(database, ".info/connected");
+onValue(connectedRef, (snap) => {
+  const statusElement = document.querySelector('.status-text') || document.getElementById('connectionStatus');
+  
+  if (snap.val() === true) {
+    console.log("Conectado ao Firebase!");
+    if (statusElement) {
+      statusElement.innerText = "Conectado ao Cloud Server";
+      statusElement.style.color = "#34d399"; // Verde
+    }
+  } else {
+    if (statusElement) {
+      statusElement.innerText = "Conectando ao Cloud Server...";
+    }
+  }
+});
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
