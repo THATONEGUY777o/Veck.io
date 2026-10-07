@@ -5,27 +5,39 @@ const db = window.database;
 // 1. Função para Ocultar Menu e Iniciar o Canvas do Jogo
 // -------------------------------------------------------------
 function launchGameView() {
-    console.log("A iniciar a arena do jogo...");
+    console.log("Transição para o jogo iniciada...");
 
-    // 1. Esconde o menu principal e lobbies
-    const mainMenu = document.getElementById('mainMenu') || document.querySelector('.card-menu');
-    const roomLobby = document.getElementById('roomLobby') || document.querySelector('.room-lobby');
-    
+    // 1. Força a ocultação de todos os elementos de menu/UI de entrada
+    const mainMenu = document.getElementById('mainMenu');
     if (mainMenu) mainMenu.style.display = 'none';
-    if (roomLobby) roomLobby.style.display = 'none';
 
-    // 2. Localiza e exibe o Canvas do jogo
+    const cardMenu = document.querySelector('.card-menu');
+    if (cardMenu) cardMenu.style.display = 'none';
+
+    // 2. Força a exibição do Canvas principal do jogo
     const canvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
     if (canvas) {
         canvas.style.display = 'block';
+        canvas.style.visibility = 'visible';
         
-        // Ajusta dimensões se necessário
+        // Garante que ocupa a tela toda se estiver sem tamanho definido
         if (canvas.width === 0 || canvas.height === 0) {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         }
     }
 
+    // 3. Tenta chamar as funções clássicas de renderização/loop do teu jogo
+    if (typeof startGame === 'function') {
+        startGame();
+    } else if (typeof init === 'function') {
+        init();
+    } else if (typeof animate === 'function') {
+        animate();
+    } else if (typeof gameLoop === 'function') {
+        gameLoop();
+    }
+}
     // 3. Ativa o loop do jogo (tenta as funções padrão do teu projeto)
     if (typeof isPlaying !== 'undefined') isPlaying = true;
     if (typeof gameRunning !== 'undefined') gameRunning = true;
