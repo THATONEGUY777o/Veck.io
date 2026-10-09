@@ -47,22 +47,22 @@ function launchGameView() {
 // 2. Função para Criar Sala no Firebase
 // -------------------------------------------------------------
 function createRoom() {
-    // Busca os módulos do window no EXATO MOMENTO do clique
+    // 1. Garante que os módulos do Firebase estão disponíveis no window
     const database = window.database;
     const dbRef = window.dbRef;
     const dbSet = window.dbSet;
 
     if (!database || !dbRef || !dbSet) {
-        alert("O servidor ainda está a conectar. Aguarde 2 segundos e tente novamente...");
+        alert("O servidor ainda está a conectar. Aguarde 2 segundos...");
         return;
     }
 
-    // Gera um código de sala aleatório de 6 dígitos
+    // 2. Gera o código da sala e obtém o apelido
     const roomCode = Math.floor(100000 + Math.random() * 900000).toString();
     const nicknameInput = document.getElementById('nicknameInput') || document.querySelector('input[type="text"]');
     const playerName = (nicknameInput && nicknameInput.value.trim() !== "") ? nicknameInput.value : 'CyberPilot';
 
-    // Aponta para 'rooms/CÓDIGO' no Realtime Database
+    // 3. Regista a sala na base de dados (Sem alterar a lógica que já funciona)
     const roomRef = dbRef(database, 'rooms/' + roomCode);
 
     dbSet(roomRef, {
@@ -70,24 +70,17 @@ function createRoom() {
         status: 'waiting',
         createdAt: Date.now()
     }).then(() => {
-        console.log("Sala criada no Firebase com sucesso! Código:", roomCode);
+        console.log("Sala guardada no Firebase com sucesso! Código:", roomCode);
 
-        // 1. Atualiza o status da conexão para Verde
+        // 4. Atualiza o status da conexão para verde
         const statusElement = document.querySelector('.status-text') || document.getElementById('connectionStatus');
         if (statusElement) {
             statusElement.innerText = "Conectado ao Cloud Server";
             statusElement.style.color = "#34d399";
         }
 
-        // 2. Escreve o código da sala onde houver campo reservado
-        const codeElement = document.getElementById('activeRoomCode');
-        if (codeElement) {
-            codeElement.innerText = roomCode;
-        }
-
-        // 3. Transforma o botão "JOGAR OFFLINE" em "🚀 JOGAR ONLINE"
+        // 5. Transforma o botão "JOGAR OFFLINE" em "JOGAR ONLINE"
         let btnMainPlay = document.getElementById('btnPlayOffline');
-        
         if (!btnMainPlay) {
             const buttons = document.querySelectorAll('button');
             buttons.forEach(btn => {
@@ -99,15 +92,31 @@ function createRoom() {
 
         if (btnMainPlay) {
             btnMainPlay.innerText = `🚀 JOGAR ONLINE (SALA: ${roomCode})`;
-            btnMainPlay.style.backgroundColor = "#10b981"; // Verde
+            btnMainPlay.style.backgroundColor = "#10b981";
             btnMainPlay.style.color = "#ffffff";
 
-            // Substitui o evento para iniciar a transição da tela
+            // 6. Ao clicar no botão verde "JOGAR ONLINE":
             const newBtn = btnMainPlay.cloneNode(true);
             btnMainPlay.parentNode.replaceChild(newBtn, btnMainPlay);
 
             newBtn.addEventListener('click', () => {
-                launchGameView();
+                // Esconde o menu
+                const mainMenu = document.getElementById('mainMenu') || document.querySelector('.card-menu');
+                if (mainMenu) mainMenu.style.display = 'none';
+
+                // Exibe e dimensiona o Canvas do jogo
+                const canvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
+                if (canvas) {
+                    canvas.style.display = 'block';
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+
+                // Dispara o loop original do jogo
+                if (typeof startGame === 'function') startGame();
+                else if (typeof initGame === 'function') initGame();
+                else if (typeof init === 'function') init();
+                else if (typeof animate === 'function') animate();
             });
         }
 
