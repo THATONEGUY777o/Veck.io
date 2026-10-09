@@ -1,27 +1,32 @@
 // -------------------------------------------------------------
 // 1. Função para Ocultar Menu e Iniciar o Canvas do Jogo
 // -------------------------------------------------------------
+// 1. Função para esconder a UI e exibir o Canvas
 function launchGameView() {
-    console.log("A iniciar a arena do jogo...");
-
-    // 1. Esconde o menu principal e lobbies
+    // Esconde o card do menu principal
     const mainMenu = document.getElementById('mainMenu') || document.querySelector('.card-menu');
-    const roomLobby = document.getElementById('roomLobby') || document.querySelector('.room-lobby');
-    
     if (mainMenu) mainMenu.style.display = 'none';
-    if (roomLobby) roomLobby.style.display = 'none';
 
-    // 2. Localiza e exibe o Canvas do jogo
+    // Exibe o canvas do jogo
     const canvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
     if (canvas) {
         canvas.style.display = 'block';
         
-        // Ajusta dimensões se necessário
-        if (canvas.width === 0 || canvas.height === 0) {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
+        // Garante as dimensões do ecrã
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     }
+
+    // --- AQUI ENTRA O TEU JOGO ---
+    // Executa a função do teu código antigo que inicia o loop do canvas / física
+    if (typeof startGame === 'function') {
+        startGame(); 
+    } else if (typeof init === 'function') {
+        init();
+    } else if (typeof animate === 'function') {
+        animate();
+    }
+}
 
     // 3. Ativa o loop de jogo (se existir no teu script)
     if (typeof isPlaying !== 'undefined') isPlaying = true;
