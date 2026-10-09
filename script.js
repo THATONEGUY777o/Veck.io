@@ -1,44 +1,29 @@
-// Referência à base de dados que foi inicializada no HTML
-const db = window.database;
-
 // -------------------------------------------------------------
 // 1. Função para Ocultar Menu e Iniciar o Canvas do Jogo
 // -------------------------------------------------------------
 function launchGameView() {
-    console.log("Transição para o jogo iniciada...");
+    console.log("A iniciar a arena do jogo...");
 
-    // 1. Força a ocultação de todos os elementos de menu/UI de entrada
-    const mainMenu = document.getElementById('mainMenu');
+    // 1. Esconde o menu principal e lobbies
+    const mainMenu = document.getElementById('mainMenu') || document.querySelector('.card-menu');
+    const roomLobby = document.getElementById('roomLobby') || document.querySelector('.room-lobby');
+    
     if (mainMenu) mainMenu.style.display = 'none';
+    if (roomLobby) roomLobby.style.display = 'none';
 
-    const cardMenu = document.querySelector('.card-menu');
-    if (cardMenu) cardMenu.style.display = 'none';
-
-    // 2. Força a exibição do Canvas principal do jogo
+    // 2. Localiza e exibe o Canvas do jogo
     const canvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
     if (canvas) {
         canvas.style.display = 'block';
-        canvas.style.visibility = 'visible';
         
-        // Garante que ocupa a tela toda se estiver sem tamanho definido
+        // Ajusta dimensões se necessário
         if (canvas.width === 0 || canvas.height === 0) {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         }
     }
 
-    // 3. Tenta chamar as funções clássicas de renderização/loop do teu jogo
-    if (typeof startGame === 'function') {
-        startGame();
-    } else if (typeof init === 'function') {
-        init();
-    } else if (typeof animate === 'function') {
-        animate();
-    } else if (typeof gameLoop === 'function') {
-        gameLoop();
-    }
-}
-    // 3. Ativa o loop do jogo (tenta as funções padrão do teu projeto)
+    // 3. Ativa o loop de jogo (se existir no teu script)
     if (typeof isPlaying !== 'undefined') isPlaying = true;
     if (typeof gameRunning !== 'undefined') gameRunning = true;
 
@@ -50,17 +35,20 @@ function launchGameView() {
         init();
     } else if (typeof animate === 'function') {
         animate();
-    } else {
-        console.log("Iniciando modo de renderização do jogo...");
     }
 }
 
 // -------------------------------------------------------------
-// 2. Função para Criar Sala e Alterar o Botão de Jogar
+// 2. Função para Criar Sala no Firebase
 // -------------------------------------------------------------
 function createRoom() {
-    if (!window.database || !window.dbRef || !window.dbSet) {
-        alert("O servidor ainda está a conectar. Aguarde alguns segundos...");
+    // Busca os módulos do window no EXATO MOMENTO do clique
+    const database = window.database;
+    const dbRef = window.dbRef;
+    const dbSet = window.dbSet;
+
+    if (!database || !dbRef || !dbSet) {
+        alert("O servidor ainda está a conectar. Aguarde 2 segundos e tente novamente...");
         return;
     }
 
@@ -70,9 +58,9 @@ function createRoom() {
     const playerName = (nicknameInput && nicknameInput.value.trim() !== "") ? nicknameInput.value : 'CyberPilot';
 
     // Aponta para 'rooms/CÓDIGO' no Realtime Database
-    const roomRef = window.dbRef(window.database, 'rooms/' + roomCode);
+    const roomRef = dbRef(database, 'rooms/' + roomCode);
 
-    window.dbSet(roomRef, {
+    dbSet(roomRef, {
         host: playerName,
         status: 'waiting',
         createdAt: Date.now()
@@ -86,32 +74,30 @@ function createRoom() {
             statusElement.style.color = "#34d399";
         }
 
-        // 2. Coloca o código da sala no ecrã (se houver elemento reservado)
+        // 2. Escreve o código da sala onde houver campo reservado
         const codeElement = document.getElementById('activeRoomCode');
         if (codeElement) {
             codeElement.innerText = roomCode;
         }
 
-        // 3. Localiza e transforma o botão "JOGAR OFFLINE" em "JOGAR ONLINE"
+        // 3. Transforma o botão "JOGAR OFFLINE" em "🚀 JOGAR ONLINE"
         let btnMainPlay = document.getElementById('btnPlayOffline');
         
         if (!btnMainPlay) {
-            // Se não tiver ID, procura o botão pelo texto original
             const buttons = document.querySelectorAll('button');
             buttons.forEach(btn => {
-                if (btn.innerText.includes('JOGAR OFFLINE')) {
+                if (btn.innerText.includes('OFFLINE') || btn.innerText.includes('JOGAR')) {
                     btnMainPlay = btn;
                 }
             });
         }
 
         if (btnMainPlay) {
-            // Altera visualmente o botão
             btnMainPlay.innerText = `🚀 JOGAR ONLINE (SALA: ${roomCode})`;
-            btnMainPlay.style.backgroundColor = "#10b981"; // Verde Neon
+            btnMainPlay.style.backgroundColor = "#10b981"; // Verde
             btnMainPlay.style.color = "#ffffff";
 
-            // Substitui o evento de clique antigo para iniciar a partida online
+            // Substitui o evento para iniciar a transição da tela
             const newBtn = btnMainPlay.cloneNode(true);
             btnMainPlay.parentNode.replaceChild(newBtn, btnMainPlay);
 
@@ -127,10 +113,9 @@ function createRoom() {
 }
 
 // -------------------------------------------------------------
-// 3. Configuração dos Cliques dos Botões ao Carregar
+// 3. Atribuição dos Botões ao Carregar a Página
 // -------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-    // Localiza o botão "+ CRIAR SALA"
     let btnCreate = document.getElementById('btnCreateRoom');
 
     if (!btnCreate) {
