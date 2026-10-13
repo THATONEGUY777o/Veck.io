@@ -40,7 +40,6 @@
                 if (!window.FirebaseServices) {
                     throw new Error('Firebase não carregou. Verifique sua conexão e recarregue a página.');
                 }
-                setStatus('Conectando ao Firebase e criando sala...');
                 await game.netManager.createRoom(async (code) => {
                     const { name, color } = getPlayerDetails('HostPilot');
                     setStatus(`Sala criada! Código: ${code}`, '#34d399');
@@ -50,7 +49,7 @@
                         console.error('Falha ao iniciar a partida:', error);
                         setStatus(`Sala criada, mas não foi possível iniciar a partida: ${error.message || error}`);
                     }
-                }, (message) => setStatus(message));
+                }, (message) => setStatus(message), (message) => setStatus(message));
             } catch (error) {
                 console.error('Erro ao criar sala:', error);
                 setStatus(`Não foi possível criar a sala: ${error.message || error}`);
