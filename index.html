@@ -1005,31 +1005,32 @@
             }
 
             async initAuth() {
-                const { auth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = window.FirebaseServices;
-                
-                return new Promise((resolve, reject) => {
-                    const unsubscribe = onAuthStateChanged(auth, (user) => {
-                        if (user) {
-                            this.myUserId = user.uid;
-                            this.isAuthReady = true;
-                            unsubscribe();
-                            resolve(user);
-                        }
-                    }, (err) => {
-                        console.error("Auth state error:", err);
-                        unsubscribe();
-                        reject(err);
-                    });
+                const services = window.FirebaseServices;
+                if (!services) throw new Error('Firebase SDK ainda não foi inicializado.');
+                const { auth, signInAnonymously, signInWithCustomToken } = services;
 
-                    const signInPromise = typeof __initial_auth_token !== 'undefined' && __initial_auth_token
-                        ? signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth))
-                        : signInAnonymously(auth);
-                    signInPromise.catch((err) => {
-                        console.error("Auth error:", err);
-                        unsubscribe();
-                        reject(err);
-                    });
-                });
+                if (auth.currentUser) {
+                    this.myUserId = auth.currentUser.uid;
+                    this.isAuthReady = true;
+                    return auth.currentUser;
+                }
+
+                const authRequest = typeof __initial_auth_token !== 'undefined' && __initial_auth_token
+                    ? signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth))
+                    : signInAnonymously(auth);
+                let timeoutId;
+                const credential = await Promise.race([
+                    authRequest,
+                    new Promise((_, reject) => {
+                        timeoutId = setTimeout(() => reject(new Error('Autenticação demorou mais de 15 segundos. Verifique sua conexão e o Firebase Authentication.')), 15000);
+                    })
+                ]).finally(() => clearTimeout(timeoutId));
+
+                const user = credential?.user || auth.currentUser;
+                if (!user) throw new Error('O Firebase não retornou um usuário autenticado.');
+                this.myUserId = user.uid;
+                this.isAuthReady = true;
+                return user;
             }
 
             async ensureAuth() {
@@ -1038,8 +1039,9 @@
                 return user.uid;
             }
 
-            async createRoom(onSuccess, onError) {
+            async createRoom(onSuccess, onError, onProgress = () => {}) {
                 try {
+                    onProgress('Autenticando no Firebase...');
                     await this.ensureAuth();
                     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
                     this.roomCode = code;
@@ -1048,13 +1050,20 @@
                     const { db, appId, doc, setDoc } = window.FirebaseServices;
                     const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
 
-                    await setDoc(roomRef, {
-                        code: code,
-                        hostId: this.myUserId,
-                        createdAt: Date.now(),
-                        players: {},
-                        status: 'active'
-                    });
+                    onProgress('Salvando sala no Firestore...');
+                    let timeoutId;
+                    await Promise.race([
+                        setDoc(roomRef, {
+                            code: code,
+                            hostId: this.myUserId,
+                            createdAt: Date.now(),
+                            players: {},
+                            status: 'active'
+                        }),
+                        new Promise((_, reject) => {
+                            timeoutId = setTimeout(() => reject(new Error('O Firestore não respondeu em 15 segundos. Verifique a conexão, a criação do banco Firestore e as regras de segurança.')), 15000);
+                        })
+                    ]).finally(() => clearTimeout(timeoutId));
 
                     this.subscribeToRoom(code);
                     this.subscribeToEvents(code);
