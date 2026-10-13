@@ -10,47 +10,31 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script type="module">
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Ouve o estado real da conexão com o Firebase
-const connectedRef = ref(database, ".info/connected");
-onValue(connectedRef, (snap) => {
-  const statusElement = document.querySelector('.status-text') || document.getElementById('connectionStatus');
-  
-  if (snap.val() === true) {
-    console.log("Conectado ao Firebase!");
-    if (statusElement) {
-      statusElement.innerText = "Conectado ao Cloud Server";
-      statusElement.style.color = "#34d399"; // Verde
-    }
-  } else {
-    if (statusElement) {
-      statusElement.innerText = "Conectando ao Cloud Server...";
-    }
-  }
-});
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Environment variables setup
+        // Usa a configuração injetada pelo ambiente quando disponível; caso contrário,
+        // usa o projeto Firebase configurado neste arquivo.
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'veck-io-game';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
+        const firebaseConfig = typeof __firebase_config !== 'undefined'
+            ? JSON.parse(__firebase_config)
             : {
-                apiKey: "AIzaSyDummyKeyForFallbackOnly",
-                authDomain: "demo-app.firebaseapp.com",
-                projectId: "demo-app",
-                storageBucket: "demo-app.appspot.com",
-                messagingSenderId: "123456789",
-                appId: "1:123456789:web:abcdef"
+                apiKey: "AIzaSyA17W8iV3aO4eTYqJGSAvHVQ96uI4nzGK8",
+                authDomain: "veck-io.firebaseapp.com",
+                databaseURL: "https://veck-io-default-rtdb.firebaseio.com",
+                projectId: "veck-io",
+                storageBucket: "veck-io.firebasestorage.app",
+                messagingSenderId: "587896276882",
+                appId: "1:587896276882:web:db20bb4f71ee7f4336234b",
+                measurementId: "G-BSF0BBPG86"
             };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        // FIX 1: Pass 'app' instead of 'auth' to avoid ReferenceError
         const auth = getAuth(app);
 
+        // Publica os serviços usados pela lógica do jogo inline.
         window.FirebaseServices = {
             app, db, auth, appId,
             doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc,
@@ -1022,20 +1006,28 @@ onValue(connectedRef, (snap) => {
             async initAuth() {
                 const { auth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = window.FirebaseServices;
                 
-                return new Promise((resolve) => {
-                    onAuthStateChanged(auth, (user) => {
+                return new Promise((resolve, reject) => {
+                    const unsubscribe = onAuthStateChanged(auth, (user) => {
                         if (user) {
                             this.myUserId = user.uid;
                             this.isAuthReady = true;
+                            unsubscribe();
                             resolve(user);
                         }
+                    }, (err) => {
+                        console.error("Auth state error:", err);
+                        unsubscribe();
+                        reject(err);
                     });
 
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth));
-                    } else {
-                        signInAnonymously(auth).catch((err) => console.error("Auth error:", err));
-                    }
+                    const signInPromise = typeof __initial_auth_token !== 'undefined' && __initial_auth_token
+                        ? signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth))
+                        : signInAnonymously(auth);
+                    signInPromise.catch((err) => {
+                        console.error("Auth error:", err);
+                        unsubscribe();
+                        reject(err);
+                    });
                 });
             }
 
@@ -1982,48 +1974,6 @@ onValue(connectedRef, (snap) => {
             });
         });
     </script>
-<!-- Firebase SDK scripts (v10.8.0) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, set, push, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyA17W8iV3aO4eTYqJGSAvHVQ96uI4nzGK8",
-    authDomain: "veck-io.firebaseapp.com",
-    databaseURL: "https://veck-io-default-rtdb.firebaseio.com",
-    projectId: "veck-io",
-    storageBucket: "veck-io.firebasestorage.app",
-    messagingSenderId: "587896276882",
-    appId: "1:587896276882:web:db20bb4f71ee7f4336234b",
-    measurementId: "G-BSF0BBPG86"
-  };
-
-  // Inicializa o Firebase
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
-
-  // EXPORTA TUDO PARA O WINDOW (Essencial para o script.js funcionar)
-  window.database = database;
-  window.dbRef = ref;
-  window.dbSet = set;
-  window.dbPush = push;
-  window.dbOnValue = onValue;
-  window.dbGet = get;
-
-  // Atualiza o estado visual do servidor assim que liga
-  const connectedRef = ref(database, ".info/connected");
-  onValue(connectedRef, (snap) => {
-    const statusText = document.querySelector('.status-text') || document.getElementById('connectionStatus');
-    if (snap.val() === true) {
-      if (statusText) {
-        statusText.innerText = "Conectado ao Cloud Server";
-        statusText.style.color = "#34d399";
-      }
-    }
-  });
-</script>
-
-<!-- Importa o teu script principal depois do Firebase -->
-<script src="script.js"></script>
 </body>
 </html>
