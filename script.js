@@ -1,169 +1,211 @@
-// Controles multiplayer do VECK.IO.
-// Depende do gameInstance e do FirebaseServices inicializados pelo index HTML.
-(function () {
-    const STARTUP_TIMEOUT_MS = 15000;
-    const ROOM_TIMEOUT_MS = 20000;
+// -------------------------------------------------------------
+// Função para Criar Sala no Firebase
+// -------------------------------------------------------------
+function createRoom() {
+    console.log("Tentando criar sala...");
 
-    function withTimeout(promise, ms, message) {
-        let timer;
-        return Promise.race([
-            promise,
-            new Promise((_, reject) => {
-                timer = window.setTimeout(() => reject(new Error(message)), ms);
-            })
-        ]).finally(() => window.clearTimeout(timer));
+    // 1. Verifica se as funções do Firebase estão prontas no window
+    if (!window.database || !window.dbRef || !window.dbSet) {
+        console.error("Firebase ainda não foi inicializado no index.html!");
+        alert("O servidor ainda está a conectar. Aguarde 2 segundos e tente novamente.");
+        return;
     }
 
-    function setStatus(message, color = '') {
-        const el = document.getElementById('connectionStatus');
-        if (!el) return;
-        el.textContent = message;
-        if (color) el.style.color = color;
-    }
+    // 2. Gera um código de sala aleatório de 6 dígitos
+    const roomCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Obtém o nome digitado no campo de texto
+    const nicknameInput = document.getElementById('nicknameInput') || document.querySelector('input[type="text"]');
+    const playerName = (nicknameInput && nicknameInput.value.trim() !== "") ? nicknameInput.value : 'CyberPilot';
 
-    function bindRoomControls() {
-        // Não marque como inicializado até que o jogo e os elementos existam.
-        if (window.__roomControlsInitialized) return true;
+    // 3. Cria a referência 'rooms/CODIGO'
+    const roomRef = window.dbRef(window.database, 'rooms/' + roomCode);
 
-        const game = window.gameInstance;
-        const createButton = document.getElementById('btnCreateRoom');
-        const joinButton = document.getElementById('btnJoinRoom');
-        const confirmButton = document.getElementById('btnConfirmJoin');
-        const inputContainer = document.getElementById('roomInputContainer');
-        const codeInput = document.getElementById('roomCodeInput');
+    // 4. Envia para a nuvem
+    window.dbSet(roomRef, {
+        host: playerName,
+        status: 'waiting',
+        createdAt: Date.now()
+    }).then(() => {
+        console.log("✅ Sala criada no Firebase! Código:", roomCode);
 
-        if (!game?.netManager || !createButton || !joinButton || !confirmButton) {
-            return false;
+        // Atualiza o texto de status
+        const statusElement = document.querySelector('.status-text') || document.getElementById('connectionStatus');
+        if (statusElement) {
+            statusElement.innerText = "Conectado ao Cloud Server";
+            statusElement.style.color = "#34d399";
         }
 
-        window.__roomControlsInitialized = true;
-
-        function playerDetails(fallbackName) {
-            const nameInput = document.getElementById('playerNameInput');
-            const selectedColor = document.querySelector('.color-btn.ring-2');
-            return {
-                name: nameInput?.value.trim() || fallbackName,
-                color: selectedColor?.getAttribute('data-color') || '#00f3ff'
-            };
+        // Coloca o código da sala no ecrã
+        const codeElement = document.getElementById('activeRoomCode');
+        if (codeElement) {
+            codeElement.innerText = roomCode;
         }
 
-        createButton.addEventListener('click', async () => {
-            if (createButton.disabled) return;
-            createButton.disabled = true;
+        // Procura e transforma o botão "JOGAR OFFLINE" em "JOGAR ONLINE"
+        let btnMainPlay = document.getElementById('btnPlayOffline');
+        if (!btnMainPlay) {
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                if (btn.innerText.includes('OFFLINE') || btn.innerText.includes('JOGAR')) {
+                    btnMainPlay = btn;
+                }
+            });
+        }
 
-            try {
-                window.audio?.init?.();
-                if (!window.FirebaseServices) {
-                    throw new Error('Firebase SDK não carregou. Confira a conexão e recarregue a página.');
+        if (btnMainPlay) {
+            btnMainPlay.innerText = `🚀 JOGAR ONLINE (SALA: ${roomCode})`;
+            btnMainPlay.style.backgroundColor = "#10b981";
+            btnMainPlay.style.color = "#ffffff";
+
+            // Substitui o evento para iniciar a partida
+            const newBtn = btnMainPlay.cloneNode(true);
+            btnMainPlay.parentNode.replaceChild(newBtn, btnMainPlay);
+
+            newBtn.addEventListener('click', () => {
+                // Esconde o menu e mostra o Canvas
+                const mainMenu = document.getElementById('mainMenu') || document.querySelector('.card-menu');
+                if (mainMenu) mainMenu.style.display = 'none';
+
+                const canvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
+                if (canvas) {
+                    canvas.style.display = 'block';
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
                 }
 
-                setStatus('Autenticando no Firebase...');
-                const createPromise = game.netManager.createRoom(
-                    async (code) => {
-                        const { name, color } = playerDetails('HostPilot');
-                        setStatus(`Sala criada! Código: ${code}`, '#34d399');
-                        try {
-                            await game.startOnlineGame(name, color, true, code);
-                        } catch (error) {
-                            console.error('Falha ao iniciar a partida:', error);
-                            setStatus(`A sala foi criada, mas o jogo não iniciou: ${error.message || error}`);
-                        }
-                    },
-                    (message) => setStatus(message),
-                    (message) => setStatus(message)
-                );
-
-                await withTimeout(
-                    createPromise,
-                    ROOM_TIMEOUT_MS,
-                    'Tempo esgotado criando sala. Verifique Firebase Authentication, conexão, Firestore e regras de segurança.'
-                );
-            } catch (error) {
-                console.error('Erro no botão Criar Sala:', error);
-                setStatus(`Falha ao criar sala: ${error.code || error.message || error}`);
-            } finally {
-                createButton.disabled = false;
-            }
-        });
-
-        joinButton.addEventListener('click', () => {
-            inputContainer?.classList.toggle('hidden');
-            if (!inputContainer?.classList.contains('hidden')) codeInput?.focus();
-        });
-
-        async function joinRoom() {
-            if (confirmButton.disabled) return;
-            const code = (codeInput?.value || '').trim().toUpperCase();
-            if (code.length < 3) {
-                setStatus('Digite um código de sala válido.');
-                codeInput?.focus();
-                return;
-            }
-
-            confirmButton.disabled = true;
-            try {
-                window.audio?.init?.();
-                if (!window.FirebaseServices) {
-                    throw new Error('Firebase SDK não carregou. Confira a conexão e recarregue a página.');
-                }
-
-                setStatus('Autenticando e procurando sala...');
-                await withTimeout(
-                    game.netManager.joinRoom(
-                        code,
-                        async () => {
-                            const { name, color } = playerDetails('GuestPilot');
-                            setStatus('Conectado à sala!', '#34d399');
-                            try {
-                                await game.startOnlineGame(name, color, false, code);
-                            } catch (error) {
-                                console.error('Falha ao iniciar a partida:', error);
-                                setStatus(`Entrou na sala, mas o jogo não iniciou: ${error.message || error}`);
-                            }
-                        },
-                        (message) => setStatus(message)
-                    ),
-                    ROOM_TIMEOUT_MS,
-                    'Tempo esgotado procurando a sala. Verifique conexão e Firestore.'
-                );
-            } catch (error) {
-                console.error('Erro ao entrar na sala:', error);
-                setStatus(`Falha ao entrar na sala: ${error.code || error.message || error}`);
-            } finally {
-                confirmButton.disabled = false;
-            }
+                // Inicia o loop do jogo
+                if (typeof startGame === 'function') startGame();
+                else if (typeof initGame === 'function') initGame();
+                else if (typeof init === 'function') init();
+                else if (typeof animate === 'function') animate();
+            });
         }
 
-        confirmButton.addEventListener('click', joinRoom);
-        codeInput?.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') joinRoom();
-        });
+    }).catch((error) => {
+        console.error("Erro ao escrever no Firebase:", error);
+        alert("Falha ao criar sala. Tente novamente.");
+    });
+}
 
-        console.info('Controles de sala inicializados.');
-        return true;
-    }
+// -------------------------------------------------------------
+// Ligar o botão ao carregar a página
+// -------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    let btnCreate = document.getElementById('btnCreateRoom');
 
-    function startBinding() {
-        if (bindRoomControls()) return;
-
-        // O gameInstance é criado num listener window.load do próprio HTML.
-        // Tentamos nesse evento e fazemos polling curto como fallback.
-        window.addEventListener('load', bindRoomControls, { once: true });
-        const startedAt = Date.now();
-        const poll = window.setInterval(() => {
-            if (bindRoomControls()) {
-                window.clearInterval(poll);
-            } else if (Date.now() - startedAt >= STARTUP_TIMEOUT_MS) {
-                window.clearInterval(poll);
-                setStatus('O jogo não inicializou. Confira se o HTML e o script.js correspondem e recarregue.');
-                console.error('Timeout aguardando gameInstance e controles da sala.');
+    if (!btnCreate) {
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => {
+            if (btn.innerText.includes('CRIAR SALA')) {
+                btnCreate = btn;
             }
-        }, 100);
+        });
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startBinding, { once: true });
-    } else {
-        startBinding();
+    if (btnCreate) {
+        btnCreate.addEventListener('click', createRoom);
     }
-})();
+});
+// -------------------------------------------------------------
+// 2. Função para Criar Sala no Firebase
+// -------------------------------------------------------------
+function createRoom() {
+    // 1. Garante que os módulos do Firebase estão disponíveis no window
+    const database = window.database;
+    const dbRef = window.dbRef;
+    const dbSet = window.dbSet;
+
+    if (!database || !dbRef || !dbSet) {
+        alert("O servidor ainda está a conectar. Aguarde 2 segundos...");
+        return;
+    }
+
+    // 2. Gera o código da sala e obtém o apelido
+    const roomCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const nicknameInput = document.getElementById('nicknameInput') || document.querySelector('input[type="text"]');
+    const playerName = (nicknameInput && nicknameInput.value.trim() !== "") ? nicknameInput.value : 'CyberPilot';
+
+    // 3. Regista a sala na base de dados (Sem alterar a lógica que já funciona)
+    const roomRef = dbRef(database, 'rooms/' + roomCode);
+
+    dbSet(roomRef, {
+        host: playerName,
+        status: 'waiting',
+        createdAt: Date.now()
+    }).then(() => {
+        console.log("Sala guardada no Firebase com sucesso! Código:", roomCode);
+
+        // 4. Atualiza o status da conexão para verde
+        const statusElement = document.querySelector('.status-text') || document.getElementById('connectionStatus');
+        if (statusElement) {
+            statusElement.innerText = "Conectado ao Cloud Server";
+            statusElement.style.color = "#34d399";
+        }
+
+        // 5. Transforma o botão "JOGAR OFFLINE" em "JOGAR ONLINE"
+        let btnMainPlay = document.getElementById('btnPlayOffline');
+        if (!btnMainPlay) {
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                if (btn.innerText.includes('OFFLINE') || btn.innerText.includes('JOGAR')) {
+                    btnMainPlay = btn;
+                }
+            });
+        }
+
+        if (btnMainPlay) {
+            btnMainPlay.innerText = `🚀 JOGAR ONLINE (SALA: ${roomCode})`;
+            btnMainPlay.style.backgroundColor = "#10b981";
+            btnMainPlay.style.color = "#ffffff";
+
+            // 6. Ao clicar no botão verde "JOGAR ONLINE":
+            const newBtn = btnMainPlay.cloneNode(true);
+            btnMainPlay.parentNode.replaceChild(newBtn, btnMainPlay);
+
+            newBtn.addEventListener('click', () => {
+                // Esconde o menu
+                const mainMenu = document.getElementById('mainMenu') || document.querySelector('.card-menu');
+                if (mainMenu) mainMenu.style.display = 'none';
+
+                // Exibe e dimensiona o Canvas do jogo
+                const canvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
+                if (canvas) {
+                    canvas.style.display = 'block';
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+
+                // Dispara o loop original do jogo
+                if (typeof startGame === 'function') startGame();
+                else if (typeof initGame === 'function') initGame();
+                else if (typeof init === 'function') init();
+                else if (typeof animate === 'function') animate();
+            });
+        }
+
+    }).catch((error) => {
+        console.error("Erro ao criar sala:", error);
+        alert("Falha ao criar sala na nuvem. Tente novamente.");
+    });
+}
+
+// -------------------------------------------------------------
+// 3. Atribuição dos Botões ao Carregar a Página
+// -------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    let btnCreate = document.getElementById('btnCreateRoom');
+
+    if (!btnCreate) {
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => {
+            if (btn.innerText.includes('CRIAR SALA')) {
+                btnCreate = btn;
+            }
+        });
+    }
+
+    if (btnCreate) {
+        btnCreate.addEventListener('click', createRoom);
+    }
+});
