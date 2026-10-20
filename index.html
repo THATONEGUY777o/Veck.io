@@ -1,62 +1,13 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-BR" class="select-none touch-none overflow-hidden w-full h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VECK.IO - Cyber Neon Battle (Fixed Multiplayer)</title>
+    <title>VECK.IO - Cyber Neon Battle</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome para Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script type="module">
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-// Ouve o estado real da conexão com o Firebase
-const connectedRef = ref(database, ".info/connected");
-onValue(connectedRef, (snap) => {
-  const statusElement = document.querySelector('.status-text') || document.getElementById('connectionStatus');
-  
-  if (snap.val() === true) {
-    console.log("Conectado ao Firebase!");
-    if (statusElement) {
-      statusElement.innerText = "Conectado ao Cloud Server";
-      statusElement.style.color = "#34d399"; // Verde
-    }
-  } else {
-    if (statusElement) {
-      statusElement.innerText = "Conectando ao Cloud Server...";
-    }
-  }
-});
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Environment variables setup
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'veck-io-game';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "AIzaSyDummyKeyForFallbackOnly",
-                authDomain: "demo-app.firebaseapp.com",
-                projectId: "demo-app",
-                storageBucket: "demo-app.appspot.com",
-                messagingSenderId: "123456789",
-                appId: "1:123456789:web:abcdef"
-            };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        // FIX 1: Pass 'app' instead of 'auth' to avoid ReferenceError
-        const auth = getAuth(app);
-
-        window.FirebaseServices = {
-            app, db, auth, appId,
-            doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc,
-            signInAnonymously, signInWithCustomToken, onAuthStateChanged
-        };
-    </script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;700&display=swap');
@@ -81,9 +32,7 @@ onValue(connectedRef, (snap) => {
             position: fixed;
         }
 
-        .font-orbitron {
-            font-family: 'Orbitron', sans-serif;
-        }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
 
         .neon-glow-cyan {
             box-shadow: 0 0 20px rgba(0, 243, 255, 0.4), inset 0 0 15px rgba(0, 243, 255, 0.2);
@@ -165,21 +114,23 @@ onValue(connectedRef, (snap) => {
             </div>
 
             <div class="flex flex-col items-end gap-2">
-                <div id="activeRoomBadge" class="hidden glass-panel px-3 py-1.5 rounded-xl border border-pink-500/50 text-pink-300 font-mono text-[10px] md:text-xs flex items-center gap-2 pointer-events-auto">
-                    <span>SALA: <strong id="activeRoomCode" class="text-white">---</strong></span>
-                    <button id="btnCopyActiveCode" title="Copiar código" class="bg-pink-950/80 hover:bg-pink-800 border border-pink-500 px-2 py-0.5 rounded text-[9px] text-pink-200 active:scale-95 transition-transform">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
-                </div>
+<div id="activeRoomBadge" class="hidden glass-panel px-3 py-1.5 rounded-xl border border-pink-500/50 text-pink-300 font-mono text-[10px] md:text-xs flex items-center gap-2 pointer-events-auto">
+    <span>SALA: <strong id="activeRoomCode" class="text-white">---</strong></span>
+    <button id="btnCopyActiveCode" title="Copiar código" class="bg-pink-950/80 hover:bg-pink-800 border border-pink-500 px-2 py-0.5 rounded text-[9px] text-pink-200 active:scale-95 transition-transform">
+        <i class="fa-regular fa-copy"></i>
+    </button>
+    <!-- NOVO BOTÃO DE SAIR -->
+    <button id="btnLeaveRoom" title="Sair da sala" class="bg-red-950/80 hover:bg-red-800 border border-red-500 px-2 py-0.5 rounded text-[9px] text-red-200 active:scale-95 transition-transform ml-1">
+        <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+</div>
 
                 <div class="glass-panel p-2.5 md:p-3 rounded-2xl w-44 md:w-56 pointer-events-auto border-r-4 border-pink-500 shadow-lg">
                     <div class="font-orbitron text-pink-400 font-bold text-[10px] md:text-xs mb-1.5 border-b border-pink-900/50 pb-1 flex justify-between">
                         <span>LEADERBOARD</span>
                         <i class="fa-solid fa-trophy text-pink-400"></i>
                     </div>
-                    <div id="leaderboardList" class="space-y-0.5 md:space-y-1 text-[10px] md:text-xs font-mono">
-                        <!-- Dynamic Items -->
-                    </div>
+                    <div id="leaderboardList" class="space-y-0.5 md:space-y-1 text-[10px] md:text-xs font-mono"></div>
                 </div>
             </div>
         </div>
@@ -225,6 +176,7 @@ onValue(connectedRef, (snap) => {
         </div>
     </div>
 
+    <!-- TOUCH CONTROLS -->
     <div id="touchControls" class="absolute inset-0 z-15 pointer-events-none hidden">
         <div id="moveZone" class="absolute left-0 bottom-0 top-20 w-1/2 pointer-events-auto touch-none">
             <div id="moveBase" class="joystick-base w-32 h-32 md:w-40 md:h-40 hidden">
@@ -252,6 +204,7 @@ onValue(connectedRef, (snap) => {
         </div>
     </div>
 
+    <!-- MENU OVERLAY -->
     <div id="menuOverlay" class="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-4">
         <div class="glass-panel p-6 md:p-8 rounded-3xl w-full max-w-md border-cyan-500/40 neon-glow-cyan flex flex-col gap-5 relative overflow-hidden">
             
@@ -312,7 +265,7 @@ onValue(connectedRef, (snap) => {
             </div>
         </div>
     </div>
-
+<!-- MOTOR DO JOGO COMPLETO -->
     <script>
         class AudioSynth {
             constructor() {
@@ -834,7 +787,6 @@ onValue(connectedRef, (snap) => {
                     this.vx += ax * accel;
                     this.vy += ay * accel;
                 } else {
-                    // Smooth prediction & position lerp for remote players
                     this.vx += (this.targetVx - this.vx) * 0.25;
                     this.vy += (this.targetVy - this.vy) * 0.25;
 
@@ -848,7 +800,6 @@ onValue(connectedRef, (snap) => {
                 this.x += this.vx * dt * 60;
                 this.y += this.vy * dt * 60;
 
-                // Wall Collisions
                 if (this.x - this.radius < 0) { this.x = this.radius; this.vx *= -0.5; }
                 if (this.x + this.radius > MAP_SIZE) { this.x = MAP_SIZE - this.radius; this.vx *= -0.5; }
                 if (this.y - this.radius < 0) { this.y = this.radius; this.vy *= -0.5; }
@@ -1006,257 +957,6 @@ onValue(connectedRef, (snap) => {
             }
         }
 
-        class NetworkManager {
-            constructor(game) {
-                this.game = game;
-                this.isHost = false;
-                this.roomCode = null;
-                this.myUserId = null;
-                this.roomUnsub = null;
-                this.eventsUnsub = null;
-                this.processedEvents = new Set();
-                this.isUpdating = false;
-                this.isAuthReady = false;
-            }
-
-            async initAuth() {
-                const { auth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = window.FirebaseServices;
-                
-                return new Promise((resolve) => {
-                    onAuthStateChanged(auth, (user) => {
-                        if (user) {
-                            this.myUserId = user.uid;
-                            this.isAuthReady = true;
-                            resolve(user);
-                        }
-                    });
-
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth));
-                    } else {
-                        signInAnonymously(auth).catch((err) => console.error("Auth error:", err));
-                    }
-                });
-            }
-
-            async ensureAuth() {
-                if (this.isAuthReady && this.myUserId) return this.myUserId;
-                const user = await this.initAuth();
-                return user.uid;
-            }
-
-            async createRoom(onSuccess, onError) {
-                try {
-                    await this.ensureAuth();
-                    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-                    this.roomCode = code;
-                    this.isHost = true;
-
-                    const { db, appId, doc, setDoc } = window.FirebaseServices;
-                    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
-
-                    await setDoc(roomRef, {
-                        code: code,
-                        hostId: this.myUserId,
-                        createdAt: Date.now(),
-                        players: {},
-                        status: 'active'
-                    });
-
-                    this.subscribeToRoom(code);
-                    this.subscribeToEvents(code);
-                    onSuccess(code);
-                } catch (err) {
-                    console.error("Erro ao criar sala Cloud:", err);
-                    onError("Falha ao criar sala. Tente novamente.");
-                }
-            }
-
-            async joinRoom(code, onSuccess, onError) {
-                try {
-                    await this.ensureAuth();
-                    const cleanCode = code.trim().toUpperCase();
-                    this.roomCode = cleanCode;
-                    this.isHost = false;
-
-                    const { db, appId, doc, getDoc } = window.FirebaseServices;
-                    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', cleanCode);
-                    const roomSnap = await getDoc(roomRef);
-
-                    if (!roomSnap.exists()) {
-                        onError("Sala não encontrada! Verifique o código.");
-                        return;
-                    }
-
-                    this.subscribeToRoom(cleanCode);
-                    this.subscribeToEvents(cleanCode);
-                    onSuccess();
-                } catch (err) {
-                    console.error("Erro ao entrar na sala Cloud:", err);
-                    onError("Erro ao conectar à sala.");
-                }
-            }
-
-            subscribeToRoom(code) {
-                if (this.roomUnsub) this.roomUnsub();
-
-                const { db, appId, doc, onSnapshot } = window.FirebaseServices;
-                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
-
-                this.roomUnsub = onSnapshot(roomRef, (snapshot) => {
-                    if (!snapshot.exists()) return;
-                    const data = snapshot.data();
-                    if (data.players) {
-                        this.handlePlayersSync(data.players);
-                    }
-                }, (error) => {
-                    console.error("Erro no listener da sala:", error);
-                });
-            }
-
-            subscribeToEvents(code) {
-                if (this.eventsUnsub) this.eventsUnsub();
-
-                const { db, appId, collection, onSnapshot } = window.FirebaseServices;
-                const eventsRef = collection(db, 'artifacts', appId, 'public', 'data', 'room_events');
-
-                this.eventsUnsub = onSnapshot(eventsRef, (snapshot) => {
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === 'added') {
-                            const evt = change.doc.data();
-                            const evtId = change.doc.id;
-
-                            if (evt.roomId === code && evt.senderId !== this.myUserId && !this.processedEvents.has(evtId)) {
-                                this.processedEvents.add(evtId);
-                                this.handleIncomingEvent(evt);
-                            }
-                        }
-                    });
-
-                    if (this.processedEvents.size > 150) {
-                        this.processedEvents.clear();
-                    }
-                }, (error) => {
-                    console.error("Erro no listener de eventos:", error);
-                });
-            }
-
-            handlePlayersSync(playersData) {
-                Object.entries(playersData).forEach(([pId, pState]) => {
-                    if (pId === this.myUserId) return;
-
-                    let player = this.game.players.get(pId);
-                    if (!player) {
-                        player = this.game.addRemotePlayer(pId, pState.name || 'Piloto', pState.color || '#ff007f');
-                    }
-
-                    player.targetX = pState.x;
-                    player.targetY = pState.y;
-                    player.targetVx = pState.vx || 0;
-                    player.targetVy = pState.vy || 0;
-                    player.angle = pState.angle || 0;
-                    player.health = pState.health;
-                    player.shield = pState.shield;
-                    player.score = pState.score;
-                    player.kills = pState.kills;
-                    player.deaths = pState.deaths;
-                    player.alive = pState.alive;
-
-                    if (pState.wepId) {
-                        Object.values(WEAPONS).forEach(w => {
-                            if (w.id === pState.wepId) player.currentWeapon = w;
-                        });
-                    }
-                });
-            }
-
-            async sendPositionUpdate(player) {
-                if (!this.roomCode || !this.myUserId || this.isUpdating) return;
-                this.isUpdating = true;
-
-                const { db, appId, doc, updateDoc } = window.FirebaseServices;
-                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', this.roomCode);
-
-                const myData = {
-                    name: player.name,
-                    color: player.color,
-                    x: Math.round(player.x),
-                    y: Math.round(player.y),
-                    vx: Math.round(player.vx * 10) / 10,
-                    vy: Math.round(player.vy * 10) / 10,
-                    angle: Math.round(player.angle * 100) / 100,
-                    health: player.health,
-                    shield: player.shield,
-                    score: player.score,
-                    kills: player.kills,
-                    deaths: player.deaths,
-                    alive: player.alive,
-                    wepId: player.currentWeapon.id,
-                    lastSeen: Date.now()
-                };
-
-                try {
-                    await updateDoc(roomRef, {
-                        [`players.${this.myUserId}`]: myData
-                    });
-                } catch (e) {
-                    console.warn("Erro ao atualizar posição na nuvem:", e);
-                } finally {
-                    this.isUpdating = false;
-                }
-            }
-
-            async sendEvent(type, payload = {}) {
-                if (!this.roomCode || !this.myUserId) return;
-
-                const { db, appId, collection, addDoc } = window.FirebaseServices;
-                const eventsRef = collection(db, 'artifacts', appId, 'public', 'data', 'room_events');
-
-                try {
-                    await addDoc(eventsRef, {
-                        roomId: this.roomCode,
-                        senderId: this.myUserId,
-                        type: type,
-                        payload: payload,
-                        timestamp: Date.now()
-                    });
-                } catch (e) {
-                    console.error("Erro ao enviar evento:", e);
-                }
-            }
-
-            handleIncomingEvent(evt) {
-                const { type, payload, senderId } = evt;
-
-                if (type === 'SHOOT') {
-                    const p = this.game.players.get(senderId);
-                    if (p) {
-                        this.game.spawnBulletsForPlayer(p, payload.wep, payload.angle, payload.bulletIds);
-                    }
-                } else if (type === 'HIT_EFFECT') {
-                    this.game.particleSys.emit(payload.x, payload.y, 12, '#ff007f', 2, 1);
-                    audio.playHit();
-                } else if (type === 'DASH') {
-                    const p = this.game.players.get(senderId);
-                    if (p) p.triggerDash(this.game.particleSys);
-                } else if (type === 'CHAT') {
-                    this.game.addChatMessage(payload.sender, payload.text);
-                }
-            }
-
-            broadcast(data) {
-                if (data.type === 'SHOOT') {
-                    this.sendEvent('SHOOT', { wep: data.wep, angle: data.angle, bulletIds: data.bulletIds });
-                } else if (data.type === 'DASH') {
-                    this.sendEvent('DASH', {});
-                } else if (data.type === 'CHAT') {
-                    this.sendEvent('CHAT', { sender: data.sender, text: data.text });
-                } else if (data.type === 'HIT') {
-                    this.sendEvent('HIT', { targetId: data.targetId, damage: data.damage, bulletId: data.bulletId });
-                }
-            }
-        }
-
         class GameEngine {
             constructor() {
                 this.canvas = document.getElementById('gameCanvas');
@@ -1265,7 +965,6 @@ onValue(connectedRef, (snap) => {
                 this.miniCtx = this.minimapCanvas.getContext('2d');
 
                 this.particleSys = new ParticleSystem();
-                this.netManager = new NetworkManager(this);
 
                 this.players = new Map();
                 this.localPlayer = null;
@@ -1275,10 +974,8 @@ onValue(connectedRef, (snap) => {
                 this.powerups = [];
                 this.spawnPoints = [];
 
-                this.isOnline = false;
                 this.isRunning = false;
                 this.lastTime = 0;
-                this.netTickTimer = 0;
 
                 this.inputState = {
                     up: false, down: false, left: false, right: false,
@@ -1399,7 +1096,6 @@ onValue(connectedRef, (snap) => {
                         if (input.value.trim().length > 0) {
                             const msg = input.value.trim();
                             this.addChatMessage(this.localPlayer ? this.localPlayer.name : 'ME', msg);
-                            this.netManager.broadcast({ type: 'CHAT', sender: this.localPlayer.name, text: msg });
                             input.value = '';
                         }
                     }
@@ -1554,9 +1250,6 @@ onValue(connectedRef, (snap) => {
             triggerLocalDash() {
                 if (this.localPlayer) {
                     this.localPlayer.triggerDash(this.particleSys);
-                    if (this.isOnline) {
-                        this.netManager.broadcast({ type: 'DASH', id: this.localPlayer.id });
-                    }
                 }
             }
 
@@ -1577,7 +1270,6 @@ onValue(connectedRef, (snap) => {
             }
 
             startOfflineGame(playerName, playerColor) {
-                this.isOnline = false;
                 this.players.clear();
 
                 const myId = 'local_player';
@@ -1596,68 +1288,21 @@ onValue(connectedRef, (snap) => {
                 this.startGameLoop();
             }
 
-            async startOnlineGame(playerName, playerColor, isHost, roomCode) {
-                this.isOnline = true;
-                this.players.clear();
-
-                // FIX 2: Safely access current user ID without relying on an uninitialized peer
-                const myId = await this.netManager.ensureAuth();
-                const sp = this.spawnPoints[Math.floor(Math.random() * this.spawnPoints.length)];
-                this.localPlayer = new Player(myId, playerName, playerColor, sp.x, sp.y);
-                this.players.set(myId, this.localPlayer);
-
-                document.getElementById('activeRoomBadge').classList.remove('hidden');
-                document.getElementById('activeRoomCode').innerText = roomCode;
-
-                if (isHost) {
-                    this.addChatMessage('SYSTEM', `Sala ativa! Código: ${roomCode}`);
-                }
-
-                this.startGameLoop();
-            }
-
-            addRemotePlayer(id, name, color) {
-                const sp = this.spawnPoints[Math.floor(Math.random() * this.spawnPoints.length)];
-                const p = new Player(id, name, color, sp.x, sp.y);
-                this.players.set(id, p);
-                return p;
-            }
-
             shootBullet(player) {
                 if (player.weaponCooldown > 0 || !player.alive) return;
 
                 const wep = player.currentWeapon;
                 player.weaponCooldown = wep.cd;
 
-                const bulletIds = [];
                 for (let i = 0; i < wep.count; i++) {
-                    bulletIds.push(Math.random().toString(36).substring(2, 9));
-                }
-
-                this.spawnBulletsForPlayer(player, wep, player.angle, bulletIds);
-
-                if (this.isOnline && player.id === this.localPlayer.id) {
-                    this.netManager.broadcast({
-                        type: 'SHOOT',
-                        id: player.id,
-                        wep: wep,
-                        angle: player.angle,
-                        bulletIds: bulletIds
-                    });
-                }
-            }
-
-            spawnBulletsForPlayer(player, wep, angle, bulletIds = []) {
-                for (let i = 0; i < wep.count; i++) {
-                    const bId = bulletIds[i] || Math.random().toString(36).substring(2, 9);
-                    const spreadAngle = angle + (Math.random() - 0.5) * wep.spread;
-                    const b = new Bullet(bId, player.id, player.x, player.y, spreadAngle, wep, player.color);
+                    const spreadAngle = player.angle + (Math.random() - 0.5) * wep.spread;
+                    const b = new Bullet(null, player.id, player.x, player.y, spreadAngle, wep, player.color);
                     b.damage *= player.damageMultiplier;
                     this.bullets.push(b);
                 }
 
-                player.vx -= Math.cos(angle) * 2;
-                player.vy -= Math.sin(angle) * 2;
+                player.vx -= Math.cos(player.angle) * 2;
+                player.vy -= Math.sin(player.angle) * 2;
                 audio.playShoot(wep.name.toLowerCase());
             }
 
@@ -1688,13 +1333,6 @@ onValue(connectedRef, (snap) => {
                     this.shootBullet(this.localPlayer);
                 }
 
-                this.netTickTimer += dt;
-                // FIX 3: Adjusted sync speed to 100ms to stay within cloud write limits
-                if (this.isOnline && this.localPlayer && this.netTickTimer >= 0.1) {
-                    this.netTickTimer = 0;
-                    this.netManager.sendPositionUpdate(this.localPlayer);
-                }
-
                 this.players.forEach(p => {
                     p.update(dt, this.inputState, this);
                     if (Math.hypot(p.vx, p.vy) > 0.5) {
@@ -1702,7 +1340,6 @@ onValue(connectedRef, (snap) => {
                     }
                 });
 
-                // Respawn Logic
                 this.players.forEach(p => {
                     if (!p.alive) {
                         if (!p.respawnTimer) p.respawnTimer = 3;
@@ -1716,7 +1353,6 @@ onValue(connectedRef, (snap) => {
 
                 this.portals.forEach(pt => pt.update(dt));
 
-                // Powerups
                 this.powerups.forEach(pw => {
                     pw.update(dt);
                     this.players.forEach(p => {
@@ -1757,27 +1393,8 @@ onValue(connectedRef, (snap) => {
                                 const hitRadius = p.radius + b.size + 4;
                                 if (Math.hypot(p.x - b.x, p.y - b.y) < hitRadius) {
                                     b.alive = false;
-                                    
-                                    if (this.isOnline) {
-                                        if (b.ownerId === this.localPlayer?.id || this.netManager.isHost) {
-                                            if (this.netManager.isHost) {
-                                                const attacker = this.players.get(b.ownerId);
-                                                p.takeDamage(b.damage, attacker, this.particleSys);
-                                                this.netManager.broadcast({ type: 'HIT_EFFECT', targetId: p.id, x: p.x, y: p.y });
-                                            } else {
-                                                this.netManager.broadcast({
-                                                    type: 'HIT',
-                                                    bulletId: b.id,
-                                                    targetId: p.id,
-                                                    attackerId: b.ownerId,
-                                                    damage: b.damage
-                                                });
-                                            }
-                                        }
-                                    } else {
-                                        const attacker = this.players.get(b.ownerId);
-                                        p.takeDamage(b.damage, attacker, this.particleSys);
-                                    }
+                                    const attacker = this.players.get(b.ownerId);
+                                    p.takeDamage(b.damage, attacker, this.particleSys);
                                 }
                             }
                         });
@@ -1925,105 +1542,45 @@ onValue(connectedRef, (snap) => {
                 const name = document.getElementById('playerNameInput').value || 'CyberPilot';
                 game.startOfflineGame(name, selectedColor);
             });
-
-            document.getElementById('btnCreateRoom').addEventListener('click', async () => {
-                audio.init();
-                const status = document.getElementById('connectionStatus');
-                status.innerText = "Conectando ao Cloud Server...";
-
-                await game.netManager.createRoom(async (code) => {
-                    status.innerText = `Sala Criada no Cloud! Código: ${code}`;
-                    const name = document.getElementById('playerNameInput').value || 'HostPilot';
-                    await game.startOnlineGame(name, selectedColor, true, code);
-                }, (err) => {
-                    status.innerText = err;
-                });
-            });
-
-            document.getElementById('btnJoinRoom').addEventListener('click', () => {
-                document.getElementById('roomInputContainer').classList.toggle('hidden');
-            });
-
-            document.getElementById('btnConfirmJoin').addEventListener('click', async () => {
-                audio.init();
-                const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-                const status = document.getElementById('connectionStatus');
-
-                if (code.length < 3) {
-                    status.innerText = "Digite o código da sala!";
-                    return;
-                }
-
-                status.innerText = "Procurando sala na nuvem...";
-                await game.netManager.joinRoom(code, async () => {
-                    status.innerText = "Conectado na sala Cloud!";
-                    const name = document.getElementById('playerNameInput').value || 'GuestPilot';
-                    await game.startOnlineGame(name, selectedColor, false, code);
-                }, (err) => {
-                    status.innerText = err;
-                });
-            });
-
-            // Copy room code button
-            document.getElementById('btnCopyActiveCode').addEventListener('click', () => {
-                const code = document.getElementById('activeRoomCode').innerText;
-                const tempInput = document.createElement('input');
-                tempInput.value = code;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempInput);
-
-                const btn = document.getElementById('btnCopyActiveCode');
-                btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="fa-regular fa-copy"></i>';
-                }, 1500);
-            });
         });
     </script>
-<!-- Firebase SDK scripts (v10.8.0) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, set, push, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyA17W8iV3aO4eTYqJGSAvHVQ96uI4nzGK8",
-    authDomain: "veck-io.firebaseapp.com",
-    databaseURL: "https://veck-io-default-rtdb.firebaseio.com",
-    projectId: "veck-io",
-    storageBucket: "veck-io.firebasestorage.app",
-    messagingSenderId: "587896276882",
-    appId: "1:587896276882:web:db20bb4f71ee7f4336234b",
-    measurementId: "G-BSF0BBPG86"
-  };
+    <!-- Firebase Realtime Database SDK (v10.8.0) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  // Inicializa o Firebase
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
+        const firebaseConfig = {
+            apiKey: "AIzaSyA17W8iV3aO4eTYqJGSAvHVQ96uI4nzGK8",
+            authDomain: "veck-io.firebaseapp.com",
+            databaseURL: "https://veck-io-default-rtdb.firebaseio.com",
+            projectId: "veck-io",
+            storageBucket: "veck-io.firebasestorage.app",
+            messagingSenderId: "587896276882",
+            appId: "1:587896276882:web:db20bb4f71ee7f4336234b",
+            measurementId: "G-BSF0BBPG86"
+        };
 
-  // EXPORTA TUDO PARA O WINDOW (Essencial para o script.js funcionar)
-  window.database = database;
-  window.dbRef = ref;
-  window.dbSet = set;
-  window.dbPush = push;
-  window.dbOnValue = onValue;
-  window.dbGet = get;
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
-  // Atualiza o estado visual do servidor assim que liga
-  const connectedRef = ref(database, ".info/connected");
-  onValue(connectedRef, (snap) => {
-    const statusText = document.querySelector('.status-text') || document.getElementById('connectionStatus');
-    if (snap.val() === true) {
-      if (statusText) {
-        statusText.innerText = "Conectado ao Cloud Server";
-        statusText.style.color = "#34d399";
-      }
-    }
-  });
-</script>
+        window.database = database;
+        window.dbRef = ref;
+        window.dbSet = set;
+        window.dbPush = push;
+        window.dbOnValue = onValue;
+        window.dbGet = get;
 
-<!-- Importa o teu script principal depois do Firebase -->
-<script src="script.js"></script>
+        const connectedRef = ref(database, ".info/connected");
+        onValue(connectedRef, (snap) => {
+            const statusText = document.getElementById('connectionStatus');
+            if (snap.val() === true && statusText) {
+                statusText.innerText = "Conectado ao Cloud Server";
+                statusText.style.color = "#34d399";
+            }
+        });
+    </script>
+
+    <script src="script.js"></script>
 </body>
 </html>
